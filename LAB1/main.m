@@ -1,3 +1,4 @@
+clear variables;
 data = importfile("/home/omarkahol/MATLAB/SPERIMENTALE/LAB1/Misure Speimentali Lab 1.xlsx", "Foglio1", [2, 35]);
 
 deg = rmmissing(data.GRADI);
@@ -30,12 +31,25 @@ title('ERROR PLOT');
 xlabel('alfa [°]');
 ylabel('curva di taratura [-]');
 
-x0 = [1 1 1 1]; 
-fitfun = fittype(@(a,b,c,d,x) a*x.^8 + b*x.^6 + c*x.^4 + d*x.^2 + 1.0);
-[fitted_curve,gof] = fit(deg,f,fitfun,'StartPoint',x0);
+dft = fft(f);
+deg_length = max(deg)-min(deg);
+freqs = (1/deg_length) .* (0:1:length(dft)-1)';
+w = 2*pi/deg_length;
+sigma = 4*w/(2*pi);
+filter = exp(-0.5*freqs.^2 ./ sigma.^2);
+dft = dft .* filter;
+w = 2*pi/deg_length;
+an = (2/length(dft)).*real(dft(1:floor(0.5*length(dft))));
+an(1) = an(1) / 2;
 
-a = linspace(min(deg),max(deg),1000);
-plot(a,fitted_curve(a),'g-','LineWidth',2);
+x_space = linspace(min(deg),max(deg),1000);
+y_space = zeros(1,1000);
+for i = 1:length(an)
+    y_space = y_space + an(i).*cos((i-1)*w.*(x_space+min(deg)));
+end
+
+plot(x_space,y_space,'r-','LineWidth',2);
+
 
 
 
